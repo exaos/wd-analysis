@@ -1,0 +1,10 @@
+
+# files
+*.root
+*.d
+*.so
+*Dict.*
+
+# dir
+test/
+test_*/

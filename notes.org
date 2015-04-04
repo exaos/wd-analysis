@@ -1,0 +1,63 @@
+# -*- mode: org; coding: utf-8; -*-
+#+TITLE: 波形分析函数
+#+AUTHOR: 心蛛
+
+* 测试
+
+- run1 -- 正常运行
+- run2 -- 正常运行，结果异常
+- bad1 -- 无法正常运行
+- test1 -- 一些测试代码
+
+* 数据结构
+
+原始数据：
+- ~WaveForm_t~ -- 以 ~const~ 指针传入到分析函数中，只读
+- ~WaveHeader_t~ -- 头结构
+- ~WaveQuantity_t~ -- 波形分析参量
+- ~WavePara_t~     -- 波形分析时需要传入的参数
+
+* 分析的参量——按脉冲的类型来处理
+
+单极性脉冲：
+- fBase -- 基线
+- fSwing -- 基线的抖动（涨落）
+- fPeak -- 峰位
+  - 单极性信号，只有一个方向的峰位
+  - 双极性信号，……
+  - fFWHM
+- fTrigger -- 触发位置 (ns)
+  - fTpre -- 触发前
+  - fTpost -- 触发后
+- fPeak -- 相对于峰位的参数
+  - fPpre  -- 峰前
+  - fPpost -- 峰后
+- 电量
+  - fQtot
+  - fQpre -- 峰前
+  - fQpost -- 峰后
+
+双极性脉冲：
+- fBase
+- fSwing
+- fTrigger
+- fPeak
+
+正脉冲：
+1. 寻基线（从后）
+2. 寻峰
+3. 求基本参量
+
+负脉冲：
+1. 转换为正脉冲
+2. 相应的量乘以负
+
+双极性：
+1. 找过零点
+2. 寻正负峰
+
+* 问题
+
+- 极性分析？
+
+
