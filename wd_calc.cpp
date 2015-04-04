@@ -59,21 +59,20 @@ void wd_calc(const char *fnroot, const char *fnout="pqout.root")
   p_psd1.fT4 =  90;
 
   // loop
-  for(Long64_t i=0; i<10; i++) {
+  for(Long64_t i=0; i< /* 10 */ N; i++) {
     T->GetEntry(i);
 
-    printf("Origin:");
-    for(int j=110; j<120; j++) {
-      printf(" %d", wd.WAVE[j]);
-    }
-    printf("\n");
+    // printf("Origin:");
+    // for(int j=110; j<120; j++) {
+    //   printf(" %d", wd.WAVE[j]);
+    // }
+    // printf("\n");
     
     fpulse.nlen = wd.nLen;
     fpulse.data = wd.WAVE;
     
-    if( ! get_quantity(&pq, &fpulse, &p_pulse) )
-      break;
-    if( ! get_psd1(&psd1, &fpulse, &p_pulse, &p_psd1) )
+    if( ! get_quantity(&pq, &fpulse, &p_pulse) ||
+        ! get_psd1(&psd1, &fpulse, &p_pulse, &p_psd1) )
       break;
     fPQ->Fill();
   }

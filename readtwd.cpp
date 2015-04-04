@@ -7,7 +7,7 @@ typedef struct WaveDump {
   UInt_t nPattern;
   UInt_t nTimeStamp;
   UInt_t nDAC;
-  UShort_t WAVE[1029];
+  UShort_t WAVE[1029]; // !! Type T,  sizeof(T)<=sizeof(UInt_t)
 } WaveDump_t;
 
 void readtwd(const char *fn)
