@@ -1,4 +1,5 @@
 
+
 typedef struct WaveDump {
   UInt_t nLen;
   UInt_t nBoard;
@@ -10,10 +11,12 @@ typedef struct WaveDump {
   UShort_t WAVE[1029];
 } WaveDump_t;
 
-void wd_calc(const char *fnroot, const char *fnout="pqout.root")
+void wd_calc( const char  *fnroot, ParaPulse_t p_pulse, ParaPSD1_t p_psd1,
+              const char *fnout="pqout.root" )
 {
-  gROOT->LoadMacro("digipulse.c+g");
-  
+  // gROOT->LoadMacro("digipulse.c+");
+  // gROOT->LoadMacro("libdigipulse.so");
+
   WaveDump_t wd;
   
   TFile *f = new TFile(fnroot);
@@ -24,13 +27,18 @@ void wd_calc(const char *fnroot, const char *fnout="pqout.root")
   
   // data output
   PulseForm_t      fpulse;
-  ParaPulse_t      p_pulse;
-  ParaPSD1_t       p_psd1;
   PulseQuantity_t *pq;
   PulsePSD1_t     *psd1;
   
   TTree    *fPQ;  // Physical quantites
   TFile    *fOut; // Output file
+
+  // histograms
+  TH1F  *h1 = new TH1F("h1psd1","PSD1 of pulse",1024, 0, 1);
+  TH2F  *h2a = new TH2F("h2qt_psd1", "Qtot-PSD1 of Pulse",
+                        256, 0, 40000, 256, 0, 1.);
+  TH2F  *h2b = new TH2F("h2qt_q1", "Qtot-Q2 of Pulse",
+                        256, 0, 40000, 256, 0, 25000);
 
   // init 
   fOut = new TFile(fnout,"RECREATE");
@@ -44,18 +52,6 @@ void wd_calc(const char *fnroot, const char *fnout="pqout.root")
 
   // paras
   fpulse.ndigi = 2;
-  p_pulse.bAutoBase = true;
-  p_pulse.polar = p_m;
-  p_pulse.fBase = 1024;
-  p_pulse.fBinResolution = 1;
-  p_pulse.fVResolution = 1;
-  p_pulse.fSwing = 3;
-  p_pulse.fThreshold = 10;
-  p_pulse.fTrigger = 0.4;
-  p_psd1.fT1 = -10;
-  p_psd1.fT2 =   2;
-  p_psd1.fT3 =  30;
-  p_psd1.fT4 =  50;
 
   // loop
   for(Long64_t i=0; i< N; i++) {
@@ -73,9 +69,17 @@ void wd_calc(const char *fnroot, const char *fnout="pqout.root")
     if( ! get_quantity(&pq, &fpulse, &p_pulse) ||
         ! get_psd1(&psd1, &fpulse, &p_pulse, &p_psd1) )
       break;
+    h1->Fill(psd1->fPSD1);
+    h2a->Fill(pq->fQtot, psd1->fPSD1);
+    h2b->Fill(pq->fQtot, psd1->fQ2);
     fPQ->Fill();
   }
 
+  // histograms
+  h1->Write();
+  h2a->Write();
+  h2b->Write();
+  
   // end
   fPQ->Write();
   fOut->Close();

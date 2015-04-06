@@ -1,6 +1,5 @@
-#include "digipulse.h"
 
-#include <stdlib.h>
+#include "digipulse.h"
 
 //============================================================
 

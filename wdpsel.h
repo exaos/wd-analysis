@@ -16,7 +16,7 @@
 
 // Utilities for digital waveforms
 #include "digipulse.h"
-
+  
 // Fixed size dimensions of array or collections stored in the TTree if any.
 
 class wdpsel : public TSelector {

@@ -1,8 +1,16 @@
 #ifndef DIGIPULSE_H
 #define DIGIPULSE_H
 
-#include <stdint.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+  
 //====================
 // A typical pulseform header
 typedef struct PulseHeader {
@@ -120,6 +128,11 @@ bool get_quantity(PulseQuantity_t **pq,
 // get pulse psd1
 bool get_psd1(PulsePSD1_t **psd1,
               const PulseForm_t *pulse, ParaPulse_t *parap, ParaPSD1_t *ppsd1);
+
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif
 
