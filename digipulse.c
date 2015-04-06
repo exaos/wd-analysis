@@ -66,9 +66,9 @@ bool cast_data( uint32_t **d1, int **d2, double **d3, ExtremeVal_t *ev,
   }
 
   // Calculate the diff data according to baseline
-  ev->i_min = ev->i_max = (*d1)[0];
+  ev->i_min = ev->i_max = (*d2)[0] = isig * ((*d1)[0]-iv_base);
   ev->idx_min = ev->idx_max = 0;
-  for( idx=0; idx < pulse->nlen; idx++) {
+  for( idx=1; idx < pulse->nlen; idx++) {
     (*d2)[idx] = isig * ((*d1)[idx] - iv_base);
     (*d3)[idx] = (double) (*d2)[idx];
     if( (*d2)[idx] > ev->i_max ) { ev->i_max = (*d2)[idx]; ev->idx_max = idx; }
@@ -95,6 +95,7 @@ bool get_quantity( PulseQuantity_t **pq, const PulseForm_t *pulse, ParaPulse_t *
   int iv_base, iv_swing;
   int iv_thres, iv_peak;
   int iv_sum1, iv_sum2;
+  double t_win;
   
   ExtremeVal_t ev;
   
@@ -106,7 +107,7 @@ bool get_quantity( PulseQuantity_t **pq, const PulseForm_t *pulse, ParaPulse_t *
   }
   idx_peak = ev.idx_max;
   iv_peak  = ev.i_max;
-
+  
   // initialize pq
   if( (*pq) == NULL) {
     printf("Init structure: PulseQuantity\n");
@@ -119,16 +120,17 @@ bool get_quantity( PulseQuantity_t **pq, const PulseForm_t *pulse, ParaPulse_t *
   (*pq)->fBase  = parap->fBase;
   (*pq)->fSwing = parap->fSwing;
 
-  // trigger (CHECKME: ...)
-  (*pq)->fTpre = (*pq)->fTrigger = parap->fTrigger;
-  idx_trig = (int)(parap->fTrigger / parap->fBinResolution);
-  (*pq)->fTpost = pulse->nlen * parap->fBinResolution - parap->fTrigger;
+  // trigger
+  t_win = pulse->nlen * parap->fBinResolution;
+  (*pq)->fTpre = (*pq)->fTrigger = parap->fTrigger * t_win;
+  idx_trig = (int)((*pq)->fTrigger / parap->fBinResolution);
+  (*pq)->fTpost = t_win - (*pq)->fTrigger;
   
   // Get the peak: position and height
   (*pq)->fPeak  = idx_peak * parap->fBinResolution;
   (*pq)->fPeakH = iv_peak * parap->fVResolution;
 
-  // calculate: fPre, fPpost
+  // calculate: fPre, fPpost --- CHECKME
   iv_thres = (int) (parap->fThreshold * parap->fVResolution);
   
   idx_th1 = 0;
@@ -148,6 +150,7 @@ bool get_quantity( PulseQuantity_t **pq, const PulseForm_t *pulse, ParaPulse_t *
     }
   }
   (*pq)->fPpost = (idx_th2 - idx_peak) * parap->fBinResolution;
+  
 
   // fFWHM
   iv_ref = iv_peak/2;

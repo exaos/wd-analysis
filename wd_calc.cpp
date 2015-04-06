@@ -1,6 +1,4 @@
 
-// #include "digipulse.h"
-
 typedef struct WaveDump {
   UInt_t nLen;
   UInt_t nBoard;
@@ -52,14 +50,15 @@ void wd_calc(const char *fnroot, const char *fnout="pqout.root")
   p_pulse.fBinResolution = 1;
   p_pulse.fVResolution = 1;
   p_pulse.fSwing = 3;
-  p_pulse.fThreshold = 5;
+  p_pulse.fThreshold = 10;
+  p_pulse.fTrigger = 0.4;
   p_psd1.fT1 = -10;
-  p_psd1.fT2 =   5;
-  p_psd1.fT3 =  50;
-  p_psd1.fT4 =  90;
+  p_psd1.fT2 =   2;
+  p_psd1.fT3 =  30;
+  p_psd1.fT4 =  50;
 
   // loop
-  for(Long64_t i=0; i< /* 10 */ N; i++) {
+  for(Long64_t i=0; i< N; i++) {
     T->GetEntry(i);
 
     // printf("Origin:");

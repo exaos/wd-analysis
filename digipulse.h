@@ -48,7 +48,7 @@ typedef struct PulseQuantity { // Physical quantities from Pulseform
   double  fPpre;    // rising/falling time previous to the peak (ns)
   double  fPpost;   // falling/rising time after the peak (ns)
   double  fFWHM;    // FWHM -- full width at half the maximal (ns)
-  double  fTrigger; // trigger position (ns)
+  double  fTrigger; // trigger position: (ns)
   double  fTpre;    // duration before the trigger (ns)
   double  fTpost;   // duration after the trigger (ns)
   double  fQ;       // integral of the pulseform, corresponding to total charge
@@ -63,7 +63,7 @@ typedef enum pulsepolarity { p_m=1, p_p=2, p_bi=3, p_auto=4 } PulsePolar_t;
 
 typedef struct ParameterPulse {
   double  fDCoffset;      // DC offset (unit: mV)
-  double  fTrigger;       // trigger position (unit: ns)
+  double  fTrigger;       // trigger: N%
   double  fThreshold;     // threshold (unit: mV)
   double  fBinResolution; // the bin resolution (unit: ns; default: 1)
   double  fBase;          // baseline (unit: mV)
