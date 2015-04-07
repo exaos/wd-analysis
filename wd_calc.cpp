@@ -11,7 +11,7 @@ typedef struct WaveDump {
   UShort_t WAVE[1029];
 } WaveDump_t;
 
-void wd_calc( const char  *fnroot, ParaPulse_t p_pulse, ParaPSD1_t p_psd1,
+void wd_calc( TChain *tc, ParaPulse_t p_pulse, ParaPSD1_t p_psd1,
               const char *fnout="pqout.root" )
 {
   // gROOT->LoadMacro("digipulse.c+");
@@ -19,11 +19,11 @@ void wd_calc( const char  *fnroot, ParaPulse_t p_pulse, ParaPSD1_t p_psd1,
 
   WaveDump_t wd;
   
-  TFile *f = new TFile(fnroot);
-  TTree *T = f->Get("wdPulse");
-  T->SetBranchAddress("Wave", &wd.nLen);
+  // TFile *f = new TFile(fnroot);
+  // TTree *T = f->Get("wdPulse");
+  tc->SetBranchAddress("Wave", &wd.nLen);
   
-  Long64_t N = T->GetEntries();
+  Long64_t N = tc->GetEntries();
   
   // data output
   PulseForm_t      fpulse;
@@ -36,9 +36,9 @@ void wd_calc( const char  *fnroot, ParaPulse_t p_pulse, ParaPSD1_t p_psd1,
   // histograms
   TH1F  *h1 = new TH1F("h1psd1","PSD1 of pulse",1024, 0, 1);
   TH2F  *h2a = new TH2F("h2qt_psd1", "Qtot-PSD1 of Pulse",
-                        256, 0, 40000, 256, 0, 1.);
+                        256, 0, 20000, 256, 0, 1.);
   TH2F  *h2b = new TH2F("h2qt_q1", "Qtot-Q2 of Pulse",
-                        256, 0, 40000, 256, 0, 25000);
+                        256, 0, 20000, 256, 0, 10000);
 
   // init 
   fOut = new TFile(fnout,"RECREATE");
@@ -55,7 +55,7 @@ void wd_calc( const char  *fnroot, ParaPulse_t p_pulse, ParaPSD1_t p_psd1,
 
   // loop
   for(Long64_t i=0; i< N; i++) {
-    T->GetEntry(i);
+    tc->GetEntry(i);
 
     // printf("Origin:");
     // for(int j=110; j<120; j++) {
