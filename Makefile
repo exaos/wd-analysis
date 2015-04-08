@@ -43,7 +43,7 @@ clean:
 libdigipulse.so: digipulse.o wdpsel.o # wdpDict.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-digipulse.o: digipulse.cpp digipulse.hpp
+digipulse.o: digipulse.c digipulse.h
 
 wdpsel.o: wdpsel.C wdpsel.h digipulse.h
 

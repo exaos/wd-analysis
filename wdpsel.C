@@ -96,9 +96,9 @@ void wdpsel::Begin(TTree * /*tree*/)
   p_pulse.fp_ocut = NULL; // pointers must be initialzed in C++
   p_pulse.fp_ucut = NULL;
   p_psd1.fT1 = -10;
-  p_psd1.fT2 =   5;
-  p_psd1.fT3 =  50;
-  p_psd1.fT4 =  90;
+  p_psd1.fT2 =  10;
+  p_psd1.fT3 = 100;
+  p_psd1.fT4 = 100;
 }
 
 void wdpsel::SlaveBegin(TTree * /*tree*/)
