@@ -93,6 +93,8 @@ void wdpsel::Begin(TTree * /*tree*/)
   p_pulse.fVResolution = 1;
   p_pulse.fSwing = 3;
   p_pulse.fThreshold = 5;
+  p_pulse.fp_ocut = NULL; // pointers must be initialzed in C++
+  p_pulse.fp_ucut = NULL;
   p_psd1.fT1 = -10;
   p_psd1.fT2 =   5;
   p_psd1.fT3 =  50;

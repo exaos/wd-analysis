@@ -15,7 +15,7 @@
 // Header file for the classes stored in the TTree if any.
 
 // Utilities for digital waveforms
-#include "digipulse.hpp"
+#include "digipulse.h"
   
 // Fixed size dimensions of array or collections stored in the TTree if any.
 
