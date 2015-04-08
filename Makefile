@@ -38,7 +38,7 @@ all: ${LIBS}
 .PHONY: clean
 
 clean:
-	@rm -f *.o ${LIBS}
+	@rm -f *.o ${LIBS} *.d *.so
 
 libdigipulse.so: digipulse.o wdpsel.o # wdpDict.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
