@@ -1,6 +1,7 @@
 
 # files
 *.root
+*.o
 *.d
 *.so
 *Dict.*

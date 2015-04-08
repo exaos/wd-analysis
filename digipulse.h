@@ -69,6 +69,9 @@ typedef struct PulseQuantity { // Physical quantities from Pulseform
 // Parameters for analysis
 typedef enum pulsepolarity { p_m=1, p_p=2, p_bi=3, p_auto=4 } PulsePolar_t;
 
+typedef bool (*ptrCutFuncO)(int, uint32_t *);
+typedef bool (*ptrCutFuncU)(int, int *);
+
 typedef struct ParameterPulse {
   double  fDCoffset;      // DC offset (unit: mV)
   double  fTrigger;       // trigger: N%
@@ -77,12 +80,18 @@ typedef struct ParameterPulse {
   double  fBase;          // baseline (unit: mV)
   double  fVResolution;   // the voltage resolution (uint: mV; default: 1)
   double  fSwing;         // the fluctuation of baseline (unit: mV)
+  
+  // software gate: (start, end); (unit: ns)
   struct Gate {
     double start;
     double end;
-  } fGate;                // software gate: (start, end); (unit: ns)
+  } fGate;
   bool    bAutoBase;      // automatically search the baseline or not
   PulsePolar_t polar;     // pulse polarity: 1=-, 2=+, 3=bipolar
+  
+  // the cut function: bool p_cut(int, int*)
+  ptrCutFuncO  fp_ocut;   // cut for original data
+  ptrCutFuncU  fp_ucut;   // Cut for unified data
 } ParaPulse_t;
 
 //====================
