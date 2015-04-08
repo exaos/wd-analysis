@@ -134,10 +134,8 @@ Bool_t wdpsel::Process(Long64_t entry)
   fpulse.nlen = Wave_nLen;
   fpulse.data = Wave_WAVE;
   
-  if( ! get_quantity(&pq, &fpulse, &p_pulse) )
-    return kFALSE;
-
-  if( ! get_psd1(&psd1, &fpulse, &p_pulse, &p_psd1) )
+  if( ! get_quantity(&pq, &fpulse, &p_pulse) ||
+      ! get_psd1(&psd1, &fpulse, &p_pulse, &p_psd1) )
     return kFALSE;
 
   fPQ->Fill();

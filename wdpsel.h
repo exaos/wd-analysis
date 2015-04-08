@@ -15,7 +15,7 @@
 // Header file for the classes stored in the TTree if any.
 
 // Utilities for digital waveforms
-#include "digipulse.h"
+#include "digipulse.hpp"
   
 // Fixed size dimensions of array or collections stored in the TTree if any.
 
@@ -31,12 +31,12 @@ class wdpsel : public TSelector {
   UInt_t          Wave_nPattern;
   UInt_t          Wave_nTimeStamp;
   UInt_t          Wave_nDAC;
-  UShort_t        Wave_WAVE[1029];   //[nLen]
+  UShort_t        Wave_WAVE[4096];   //[nLen]
 
   // List of branches
   TBranch        *b_Wave;   // -- the branch
   
- wdpsel(TTree * /* tree */ =0) : fChain(0) { }
+ wdpsel(TTree * /* tree */ =0) : fChain(0) { };
   virtual ~wdpsel() { }
   virtual Int_t   Version() const { return 2; }
   virtual void    Begin(TTree *tree);
@@ -52,9 +52,6 @@ class wdpsel : public TSelector {
   virtual TList  *GetOutputList() const { return fOutput; }
   virtual void    SlaveTerminate();
   virtual void    Terminate();
-  
-  // Make this class visible to ROOT -- CINT
-  ClassDef(wdpsel,0);
 
   // data output
   PulseForm_t      fpulse;
@@ -65,7 +62,9 @@ class wdpsel : public TSelector {
   
   TTree    *fPQ;  // Physical quantites
   TFile    *fOut; // Output file
-
+ 
+  // Make this class visible to ROOT -- CINT
+  ClassDef(wdpsel,0);
 };
 
 #endif

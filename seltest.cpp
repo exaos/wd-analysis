@@ -1,7 +1,7 @@
 
 void seltest(const char *fn)
 {
-  gROOT->LoadMacro("digipulse.c+g");
+  gROOT->LoadMacro("digipulse.cpp+g");
   gROOT->LoadMacro("wdpsel.C+g");
 
   wdpsel *wd = new wdpsel();

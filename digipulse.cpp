@@ -1,5 +1,5 @@
 
-#include "digipulse.h"
+#include "digipulse.hpp"
 
 //============================================================
 
@@ -18,12 +18,12 @@ bool cast_data( uint32_t **d_orig, int **d_usig, double **d_smth, ExtremeVal_t *
     isig = -1;
   }
 
-  (*d_orig) = (uint32_t *)calloc(pulse->nlen, sizeof(uint32_t));
-  (*d_usig) = (int *)     calloc(pulse->nlen, sizeof(int));
-  (*d_smth) = (double *)  calloc(pulse->nlen, sizeof(double));
+  (*d_orig) = new uint32_t[pulse->nlen];
+  (*d_usig) = new int[pulse->nlen];
+  (*d_smth) = new double[pulse->nlen];
 
   if( ((*d_orig)==NULL) || ((*d_usig)==NULL) || ((*d_smth)==NULL) ) {
-    // printf("Failed to initialize memory!");
+    // std::cerr << "Failed to initilaize memory!" << std::endl;
     return false;
   }
 
@@ -45,7 +45,7 @@ bool cast_data( uint32_t **d_orig, int **d_usig, double **d_smth, ExtremeVal_t *
 
   // cut for original signal
   if( (parap->fp_ocut != NULL) && !(*parap->fp_ocut)(pulse->nlen, *d_orig) ) {
-    // printf("Original cut: false!");
+    // std::cout << "Cut on original signal: false!" << std::endl;
     return false;
   }
   
@@ -84,6 +84,7 @@ bool cast_data( uint32_t **d_orig, int **d_usig, double **d_smth, ExtremeVal_t *
   
   // cut for plus signal
   if( (parap->fp_ucut != NULL) && !(*parap->fp_ucut)(pulse->nlen, *d_usig) ) {
+    // std::cout << "Cut on unified signal: false!" << std::endl;
     return false;
   }
 
@@ -202,9 +203,9 @@ bool get_quantity( PulseQuantity_t **pq, const PulseForm_t *pulse, ParaPulse_t *
   (*pq)->fQ = (*pq)->fQpre + (*pq)->fQpost;
   
   //============================================================
-  free(d_orig);
-  free(d_usig);
-  free(d_smth);
+  if(d_orig) delete d_orig;
+  if(d_usig) delete d_usig;
+  if(d_smth) delete d_smth;
   return true;
 }
 
@@ -263,9 +264,10 @@ bool get_psd1( PulsePSD1_t **psd1, const PulseForm_t *pulse,
   (*psd1)->fPSD1 = (*psd1)->fQ2 / (*psd1)->fQ1;
   
   //============================================================
-  free(d_orig);
-  free(d_usig);
-  free(d_smth);
+  if(d_orig) delete d_orig;
+  if(d_usig) delete d_usig;
+  if(d_smth) delete d_smth;
   return true;
 }
+
 

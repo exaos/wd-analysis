@@ -1,15 +1,10 @@
 #ifndef DIGIPULSE_H
 #define DIGIPULSE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <stddef.h>
+//#include <cstdint> // CINT error!
 #include <stdint.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdlib>
+#include <iostream>
   
 //====================
 // A typical pulseform header
@@ -137,11 +132,6 @@ bool get_quantity(PulseQuantity_t **pq,
 // get pulse psd1
 bool get_psd1(PulsePSD1_t **psd1,
               const PulseForm_t *pulse, ParaPulse_t *parap, ParaPSD1_t *ppsd1);
-
-
-#ifdef __cplusplus
-};
-#endif
 
 #endif
 
