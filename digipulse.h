@@ -118,7 +118,7 @@ typedef struct ExtremeValues {
 
 //============================================================
 // cast data array and prepare for analysis
-bool cast_data(uint32_t **d1, int **d2, double **d3, ExtremeVal_t *ev,
+bool cast_data(uint32_t **d_orig, int **d_usig, double **d_smth, ExtremeVal_t *ev,
                const PulseForm_t *pulse, ParaPulse_t *parap);
 
 // get pulse quantity

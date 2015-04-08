@@ -3,7 +3,7 @@
 
 //============================================================
 
-bool cast_data( uint32_t **d1, int **d2, double **d3, ExtremeVal_t *ev,
+bool cast_data( uint32_t **d_orig, int **d_usig, double **d_smth, ExtremeVal_t *ev,
                 const PulseForm_t *pulse, ParaPulse_t *parap )
 {
   int  isig = 1;
@@ -18,25 +18,25 @@ bool cast_data( uint32_t **d1, int **d2, double **d3, ExtremeVal_t *ev,
     isig = -1;
   }
 
-  (*d1) = (uint32_t *)calloc(pulse->nlen, sizeof(uint32_t));
-  (*d2) = (int *)     calloc(pulse->nlen, sizeof(int));
-  (*d3) = (double *)  calloc(pulse->nlen, sizeof(double));
+  (*d_orig) = (uint32_t *)calloc(pulse->nlen, sizeof(uint32_t));
+  (*d_usig) = (int *)     calloc(pulse->nlen, sizeof(int));
+  (*d_smth) = (double *)  calloc(pulse->nlen, sizeof(double));
 
-  if( ((*d1)==NULL) || ((*d2)==NULL) || ((*d3)==NULL) ) {
+  if( ((*d_orig)==NULL) || ((*d_usig)==NULL) || ((*d_smth)==NULL) ) {
     return false;
   }
   
   for(idx=0; idx<pulse->nlen; idx++) {
     switch( pulse->ndigi ) {
     case 1:
-      *((*d1)+idx) = *((uint8_t *) (pulse->data) + idx);
+      *((*d_orig)+idx) = *((uint8_t  *)(pulse->data) + idx);
       break;
     case 2:
-      *((*d1)+idx) = *((uint16_t *) (pulse->data) + idx);
+      *((*d_orig)+idx) = *((uint16_t *)(pulse->data) + idx);
       break;
     case 4:
     default:
-      *((*d1)+idx) = *((uint32_t *) (pulse->data) + idx);
+      *((*d_orig)+idx) = *((uint32_t *)(pulse->data) + idx);
     break;
     }
   }
@@ -48,11 +48,11 @@ bool cast_data( uint32_t **d1, int **d2, double **d3, ExtremeVal_t *ev,
   // find the baseline if needed, usually
   if( parap->bAutoBase ) {
     // search the first 10 bins (not last?)
-    iv_ref = (*d1)[0];
+    iv_ref = (*d_orig)[0];
     iv = idx_count = 0;
     for(idx = 0; idx < 10; idx++) {
-      if( ((int)(*d1)[idx] - iv_ref) <= iv_swing ) {
-        iv += (*d1)[idx];
+      if( ((int)(*d_orig)[idx] - iv_ref) <= iv_swing ) {
+        iv += (*d_orig)[idx];
         idx_count ++;
       }
     }
@@ -65,13 +65,13 @@ bool cast_data( uint32_t **d1, int **d2, double **d3, ExtremeVal_t *ev,
   }
 
   // Calculate the diff data according to baseline
-  ev->i_min = ev->i_max = (*d2)[0] = isig * ((*d1)[0]-iv_base);
+  ev->i_min = ev->i_max = (*d_usig)[0] = isig * ((*d_orig)[0]-iv_base);
   ev->idx_min = ev->idx_max = 0;
   for( idx=1; idx < pulse->nlen; idx++) {
-    (*d2)[idx] = isig * ((*d1)[idx] - iv_base);
-    (*d3)[idx] = (double) (*d2)[idx];
-    if( (*d2)[idx] > ev->i_max ) { ev->i_max = (*d2)[idx]; ev->idx_max = idx; }
-    if( (*d2)[idx] < ev->i_min ) { ev->i_min = (*d2)[idx]; ev->idx_min = idx; }
+    (*d_usig)[idx] = isig * ((*d_orig)[idx] - iv_base);
+    (*d_smth)[idx] = (double) (*d_usig)[idx];
+    if( (*d_usig)[idx] > ev->i_max ) { ev->i_max = (*d_usig)[idx]; ev->idx_max = idx; }
+    if( (*d_usig)[idx] < ev->i_min ) { ev->i_min = (*d_usig)[idx]; ev->idx_min = idx; }
   }
   
   return true;
@@ -83,8 +83,8 @@ bool cast_data( uint32_t **d1, int **d2, double **d3, ExtremeVal_t *ev,
 bool get_quantity( PulseQuantity_t **pq, const PulseForm_t *pulse, ParaPulse_t *parap )
 {
   uint32_t     *d_orig;
-  int          *d_sig;
-  double       *d_sm; // smoothed data
+  int          *d_usig;
+  double       *d_smth; // smoothed data
   
   // temp variablea
   int idx, idx1, idx2;
@@ -100,7 +100,7 @@ bool get_quantity( PulseQuantity_t **pq, const PulseForm_t *pulse, ParaPulse_t *
   
   //---------- initialize for calculation ----------
   // cast data array
-  if( cast_data(&d_orig, &d_sig, &d_sm, &ev, pulse, parap) == false ) {
+  if( cast_data(&d_orig, &d_usig, &d_smth, &ev, pulse, parap) == false ) {
     printf("ERROR: Failed to initialize memeory!\n");
     return false;
   }
@@ -134,7 +134,7 @@ bool get_quantity( PulseQuantity_t **pq, const PulseForm_t *pulse, ParaPulse_t *
   
   idx_th1 = 0;
   for(idx = 0; idx < idx_peak; idx++ ) {
-    if( d_sig[idx] > iv_thres ) {
+    if( d_usig[idx] > iv_thres ) {
       idx_th1 = idx;
       break;
     }
@@ -143,7 +143,7 @@ bool get_quantity( PulseQuantity_t **pq, const PulseForm_t *pulse, ParaPulse_t *
 
   idx_th2 = idx_peak;
   for(idx = idx_peak; idx < pulse->nlen; idx++) {
-    if( d_sig[idx] <= iv_thres ) {
+    if( d_usig[idx] <= iv_thres ) {
       idx_th2 = idx;
       break;
     }
@@ -157,28 +157,28 @@ bool get_quantity( PulseQuantity_t **pq, const PulseForm_t *pulse, ParaPulse_t *
   idx2 = idx_peak;
   for(idx = 0; idx < idx_peak; idx++) {
     idx1 = idx;
-    if( (iv_ref - d_sig[idx]) < 2 ) break;
+    if( (iv_ref - d_usig[idx]) < 2 ) break;
   }
   for(idx = idx_peak; idx< pulse->nlen; idx++) {
     idx2 = idx;
-    if( (d_sig[idx] - iv_ref) < 2 ) break;
+    if( (d_usig[idx] - iv_ref) < 2 ) break;
   }
   (*pq)->fFWHM = (idx2 - idx1) * parap->fBinResolution;
 
   // fQtot
   iv_sum1 = 0;
   for( idx=0; idx < pulse->nlen; idx++) {
-    iv_sum1 += d_sig[idx];
+    iv_sum1 += d_usig[idx];
   }
   (*pq)->fQtot = (double) (iv_sum1) * parap->fVResolution;
   
   // fQ = fQpre + fQpost
   iv_sum1 = iv_sum2 = 0;
   for(idx = idx_th1; idx < idx_peak; idx++) {
-    iv_sum1 += d_sig[idx];
+    iv_sum1 += d_usig[idx];
   }
   for(idx = idx_peak; idx < idx_th2; idx++) {
-    iv_sum2 += d_sig[idx];
+    iv_sum2 += d_usig[idx];
   }
   (*pq)->fQpre = (double)iv_sum1 * parap->fVResolution;
   (*pq)->fQpost= (double)iv_sum2 * parap->fVResolution;
@@ -194,8 +194,8 @@ bool get_psd1( PulsePSD1_t **psd1, const PulseForm_t *pulse,
                ParaPulse_t *parap, ParaPSD1_t *ppsd1 )
 {
   uint32_t *d_orig;
-  int      *d_sig;
-  double   *d_sm;
+  int      *d_usig;
+  double   *d_smth;
   ExtremeVal_t ev;
 
   // temp var
@@ -210,7 +210,7 @@ bool get_psd1( PulsePSD1_t **psd1, const PulseForm_t *pulse,
   }
   
   // cast data
-  if( cast_data( &d_orig, &d_sig, &d_sm, &ev, pulse, parap ) == false ) {
+  if( cast_data( &d_orig, &d_usig, &d_smth, &ev, pulse, parap ) == false ) {
     printf("ERROR: Failed to initialize memeory!\n");
     return false;
   }
@@ -228,11 +228,11 @@ bool get_psd1( PulsePSD1_t **psd1, const PulseForm_t *pulse,
     return false;
   
   for(idx = idx1; idx < idx4; idx++) {
-    iv_sum1 += d_sig[idx];
+    iv_sum1 += d_usig[idx];
   }
   
   for(idx = idx2; idx < idx3; idx++) {
-    iv_sum2 += d_sig[idx];
+    iv_sum2 += d_usig[idx];
   }
   
   (*psd1)->fQ1 = iv_sum1 * parap->fBinResolution * parap->fVResolution;
