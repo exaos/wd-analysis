@@ -23,7 +23,7 @@ bool cast_data( uint32_t **d_orig, int **d_usig, double **d_smth, ExtremeVal_t *
   (*d_smth) = (double *)  calloc(pulse->nlen, sizeof(double));
 
   if( ((*d_orig)==NULL) || ((*d_usig)==NULL) || ((*d_smth)==NULL) ) {
-    // printf("Failed to initialize memory!");
+    fprintf(stderr, "Failed to initialize memory!");
     return false;
   }
 
@@ -114,7 +114,6 @@ bool get_quantity( PulseQuantity_t **pq, const PulseForm_t *pulse, ParaPulse_t *
   //---------- initialize for calculation ----------
   // cast data array
   if( cast_data(&d_orig, &d_usig, &d_smth, &ev, pulse, parap) == false ) {
-    // printf("ERROR: Failed to initialize memeory!\n");
     return false;
   }
   
@@ -205,6 +204,7 @@ bool get_quantity( PulseQuantity_t **pq, const PulseForm_t *pulse, ParaPulse_t *
   free(d_orig);
   free(d_usig);
   free(d_smth);
+  
   return true;
 }
 
@@ -225,13 +225,12 @@ bool get_psd1( PulsePSD1_t **psd1, const PulseForm_t *pulse,
 
   // cast data
   if( cast_data( &d_orig, &d_usig, &d_smth, &ev, pulse, parap ) == false ) {
-    // printf("ERROR: Failed to initialize memeory!\n");
     return false;
   }
   
   // init psd1
   if( (*psd1) == NULL ) {
-    // printf("Init structure: PulsePSD1\n");
+    printf("Init structure: PulsePSD1\n");
     (*psd1) = (PulsePSD1_t *) malloc( sizeof(PulsePSD1_t) );
   }
   
@@ -244,8 +243,10 @@ bool get_psd1( PulsePSD1_t **psd1, const PulseForm_t *pulse,
   idx4 = idx_peak + (int) (ppsd1->fT4 * parap->fBinResolution);
   iv_sum1 = iv_sum2 = 0;
 
-  if( idx1 > idx2 || idx2 > idx3 || idx3 > idx4 || idx4 > pulse->nlen )
-    return false;
+  if( idx4 > pulse->nlen ) idx4 = pulse->nlen;
+  if( idx3 > idx4 ) idx3 = idx4;
+  if( idx2 > idx3 ) idx2 = idx3;
+  if( idx1 > idx2 ) idx1 = idx2;
 
   // calculation: main portion
   for(idx = idx1; idx < idx4; idx++) {
