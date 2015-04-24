@@ -3,270 +3,418 @@
 
 //============================================================
 
-bool cast_data( uint32_t **d_orig, int **d_usig, double **d_smth, ExtremeVal_t *ev,
-                const PulseForm_t *pulse, ParaPulse_t *parap )
+// cast data array and prepare for analysis
+
+bool dp_cast_data( uint32_t **d_orig, int **d_usig, double **d_smth,
+                   int *nlen,  PulsePortrait_t *ppt,
+                   const PulseForm_t *pulse, ParaPulse_t *para_p )
 {
   int  isig = 1;
+  PulsePoint_t  pp_min, pp_max;
 
-  // temp variablea
+  // temp variables
   int  idx, idx_count;
-  int  iv, iv_ref;
-  int  iv_base, iv_swing;
+  int  i_start, i_end;
+  int  iv, iv_ref, iv_base, iv_swing;
+
+  //----------> Check parameters
+
+  // set default fluctuation to 2
+  if( para_p->fSwing == 0 ) para_p->fSwing = 2;
   
-  // pulse polarity
-  if(parap->polar == p_m) {
-    isig = -1;
+  //----------> software gate
+
+  // check if software gate properly set
+  
+  if( para_p->bGate && ((para_p->fGate).end > 0) ) {
+
+    // calculate index: (start,end)
+    i_start = (int)( para_p->fBinResolution * (para_p->fGate).start );
+    i_end   = (int)( para_p->fBinResolution * (para_p->fGate).end );
+    
+    if( i_end > pulse->nlen ) { i_end = pulse->nlen;   }
+    if( i_start > i_end )     { i_start = 0;   }
+    
+    *nlen = i_end - i_start;
+    
+  } else {
+    
+    i_start = 0;
+    i_end   = pulse->nlen;
+    *nlen   = pulse->nlen;
+    
   }
 
-  (*d_orig) = (uint32_t *)calloc(pulse->nlen, sizeof(uint32_t));
-  (*d_usig) = (int *)     calloc(pulse->nlen, sizeof(int));
-  (*d_smth) = (double *)  calloc(pulse->nlen, sizeof(double));
+  //----------> data copy
 
-  if( ((*d_orig)==NULL) || ((*d_usig)==NULL) || ((*d_smth)==NULL) ) {
-    fprintf(stderr, "Failed to initialize memory!");
+  // memory initialization
+  (*d_orig) = (uint32_t *) calloc( (*nlen), sizeof(uint32_t) );
+  (*d_usig) = (int *)      calloc( (*nlen), sizeof(int) );
+  if( ((*d_orig) == NULL) || ((*d_usig) == NULL) ) {
+    fprintf(stderr, "dp_cast_data: Failed to initialized memory!\n");
     return false;
   }
 
   // copy original data
-  for(idx=0; idx<pulse->nlen; idx++) {
+  for(idx=0; idx<(*nlen); idx++) {
     switch( pulse->ndigi ) {
     case 1:
-      *((*d_orig)+idx) = *((uint8_t  *)(pulse->data) + idx);
+      *((*d_orig)+idx) = *((uint8_t  *)(pulse->data) + idx + i_start);
       break;
     case 2:
-      *((*d_orig)+idx) = *((uint16_t *)(pulse->data) + idx);
+      *((*d_orig)+idx) = *((uint16_t *)(pulse->data) + idx + i_start);
       break;
     case 4:
     default:
-      *((*d_orig)+idx) = *((uint32_t *)(pulse->data) + idx);
+      *((*d_orig)+idx) = *((uint32_t *)(pulse->data) + idx + i_start);
     break;
     }
   }
+  
+  //----------> first cut
 
   // cut for original signal
-  if( (parap->fp_ocut != NULL) && !(*parap->fp_ocut)(pulse->nlen, *d_orig) ) {
+  
+  if( (para_p->fp_ocut != NULL) && !(*para_p->fp_ocut)(nlen, (*d_orig)) ) {
     // printf("Original cut: false!");
     return false;
   }
+
+  //----------> baseline
   
-  // set default fluctuation to 5 mV
-  if( parap->fSwing == 0 ) parap->fSwing = 2;
-  iv_swing = (int) (parap->fSwing * parap->fVResolution);
+  iv_swing = (int) (para_p->fSwing * para_p->fVResolution);
   
   // find the baseline if needed, usually
-  if( parap->bAutoBase ) {
+  
+  if( para_p->bAutoBase ) {
+    
     // search the first 10 bins (not last?)
     iv_ref = (*d_orig)[0];
     iv = idx_count = 0;
-    for(idx = 0; idx < 10; idx++) {
+    for(idx = 0; idx < 20; idx++) {
       if( ((int)(*d_orig)[idx] - iv_ref) <= iv_swing ) {
         iv += (*d_orig)[idx];
         idx_count ++;
       }
     }
+    
     // convert
     iv_base = iv / idx_count;
-    parap->fBase = (double) (iv) / idx_count / parap->fVResolution;
+    para_p->fBase = (double) (iv) / idx_count / para_p->fVResolution;
+    
   } else {
+    
     // baseline: convert from mV to integer
-    iv_base = (int) ((parap->fBase - parap->fDCoffset) * parap->fVResolution);
+    iv_base = (int) ((para_p->fBase - para_p->fDCoffset) * para_p->fVResolution);
+    
   }
 
-  // Calculate the diff data according to baseline
-  ev->i_min = ev->i_max = (*d_usig)[0] = isig * ((*d_orig)[0]-iv_base);
-  ev->idx_min = ev->idx_max = 0;
-  for( idx=1; idx < pulse->nlen; idx++) {
+  //----------> unify
+
+  // Calculate the diff data according to baseline and
+  // flip the pulse if it is negative
+  
+  // pulse polarity
+  if( para_p->polar == p_m ) {  isig = -1;  }
+  
+  pp_min.i = pp_max.i = 0;
+  pp_min.v = pp_max.v = (*d_usig)[0] = isig * ((*d_orig)[0] - iv_base);
+  
+  for( idx=1; idx < (*nlen); idx++) {
     (*d_usig)[idx] = isig * ((*d_orig)[idx] - iv_base);
-    (*d_smth)[idx] = (double) (*d_usig)[idx];
-    if( (*d_usig)[idx] > ev->i_max ) { ev->i_max = (*d_usig)[idx]; ev->idx_max = idx; }
-    if( (*d_usig)[idx] < ev->i_min ) { ev->i_min = (*d_usig)[idx]; ev->idx_min = idx; }
-  }
-  
-  // cut for plus signal
-  if( (parap->fp_ucut != NULL) && !(*parap->fp_ucut)(pulse->nlen, *d_usig) ) {
-    return false;
-  }
-
-  return true;
-}
-
-//======================================================================
-
-// Get the quantities of pulseform
-bool get_quantity( PulseQuantity_t **pq, const PulseForm_t *pulse, ParaPulse_t *parap )
-{
-  uint32_t  *d_orig = NULL; // copied original signal
-  int       *d_usig = NULL; // flipped signal if polarity is minus
-  double    *d_smth = NULL; // smoothed signal: not used now
-  
-  // temp variablea
-  int idx, idx1, idx2;
-  int idx_trig, idx_peak;
-  int idx_th1, idx_th2;
-  int iv, iv_ref;
-  int iv_base, iv_swing;
-  int iv_thres, iv_peak;
-  int iv_sum1, iv_sum2;
-  double t_win;
-  
-  ExtremeVal_t ev;
-  
-  //---------- initialize for calculation ----------
-  // cast data array
-  if( cast_data(&d_orig, &d_usig, &d_smth, &ev, pulse, parap) == false ) {
-    return false;
-  }
-  
-  // initialize pq
-  if( (*pq) == NULL) {
-    printf("Init structure: PulseQuantity\n");
-    (*pq) = (PulseQuantity_t *) malloc(sizeof(PulseQuantity_t));
+    if( (*d_usig)[idx] > pp_max.v ) {
+      pp_max.i = idx;
+      pp_max.v = (*d_usig)[idx];
+    }
+    if( (*d_usig)[idx] < pp_min.v ) {
+      pp_min.i = idx;
+      pp_min.v = (*d_usig)[idx];
+    }
   }
 
-  idx_peak = ev.idx_max;
-  iv_peak  = ev.i_max;
+  //----------> Pulse Portrait
 
-  //============================================================
+  // PulsePortrait_t: initialization
+  if( ppt == NULL ) {
+    ppt = (PulsePortrait_t *) calloc(1, sizeof(PulsePortrait_t));
+  }
 
-  // update from pulse parameter
-  (*pq)->fBase  = parap->fBase;
-  (*pq)->fSwing = parap->fSwing;
+  // base, swing
+  ppt->fBase  = para_p->fBase ;
+  ppt->fSwing = para_p->fSwing ;
+
+  // peak, peakH
+  ppt->fPeak  = pp_max.i * para_p->fBinResolution ;
+  ppt->fPeakH = pp_max.v * para_p->fVResolution ;
 
   // trigger
-  t_win = pulse->nlen * parap->fBinResolution;
-  (*pq)->fTpre = (*pq)->fTrigger = parap->fTrigger * t_win;
-  idx_trig = (int)((*pq)->fTrigger / parap->fBinResolution);
-  (*pq)->fTpost = t_win - (*pq)->fTrigger;
-  
-  // Get the peak: position and height
-  (*pq)->fPeak  = idx_peak * parap->fBinResolution;
-  (*pq)->fPeakH = iv_peak * parap->fVResolution;
+  ppt->fTrigger = (pulse->nlen * para_p->fTrigger - i_start) * para_p->fBinResolution ;
 
-  // calculate: fPre, fPpost --- CHECKME
-  iv_thres = (int) (parap->fThreshold * parap->fVResolution);
+  //----------> Smoothing
 
-  // find where signal begins to go above the threshold before the peak
-  idx_th1 = 0;
-  for(idx = 0; idx < idx_peak; idx++ ) {
-    if( d_usig[idx] > iv_thres ) {
-      idx_th1 = idx;
-      break;
+  // calculate the smoothed pulse
+  if( para_p->bSmooth && (para_p->fp_smth != NULL) ) {
+    
+    // initialize smoothed data memory
+    (*d_smth) = (double *)calloc( *nlen, sizeof(double) );
+    
+    if((*d_smth) == NULL) {
+      fprintf(stderr, "dp_cast_data: Failed to initialized memory!\n");
+      return false;
+    }
+    
+    if( para_p->fp_smth( (*d_smth), nlen, (*d_usig) ) == false ) {
+      fprintf(stderr, "failed to smooth signal.\n");
+      return false;
     }
   }
-  (*pq)->fPpre = (idx_peak - idx_th1) * parap->fBinResolution;
-  // find where signal begins to go below the threshold after the peak
-  idx_th2 = idx_peak;
-  for(idx = idx_peak; idx < pulse->nlen; idx++) {
-    if( d_usig[idx] <= iv_thres ) {
-      idx_th2 = idx;
-      break;
-    }
-  }
-  (*pq)->fPpost = (idx_th2 - idx_peak) * parap->fBinResolution;
+  
+  //----------> last cut
 
-  // fFWHM
-  iv_ref = iv_peak/2;
-  idx1 = 0;
-  idx2 = idx_peak;
-  for(idx = 0; idx < idx_peak; idx++) {
-    idx1 = idx;
-    if( (iv_ref - d_usig[idx]) < 2 ) break;
+  // cut for unified signal
+  
+  if( (para_p->fp_ucut != NULL) && !(*para_p->fp_ucut)(nlen, (*d_usig)) ) {
+    // printf("Unified cut: false!");
+    return false;
   }
-  for(idx = idx_peak; idx< pulse->nlen; idx++) {
-    idx2 = idx;
-    if( (d_usig[idx] - iv_ref) < 2 ) break;
-  }
-  (*pq)->fFWHM = (idx2 - idx1) * parap->fBinResolution;
 
-  // fQtot
-  iv_sum1 = 0;
-  for( idx=0; idx < pulse->nlen; idx++) {
-    iv_sum1 += d_usig[idx];
-  }
-  (*pq)->fQtot = (double) (iv_sum1) * parap->fVResolution;
-  
-  // fQ = fQpre + fQpost
-  iv_sum1 = iv_sum2 = 0;
-  // calculation: sum for Qpre
-  for(idx = idx_th1; idx < idx_peak; idx++) {
-    iv_sum1 += d_usig[idx];
-  }
-  // calculation: sum for Qpost
-  for(idx = idx_peak; idx < idx_th2; idx++) {
-    iv_sum2 += d_usig[idx];
-  }
-  // unit conversion
-  (*pq)->fQpre = (double)iv_sum1 * parap->fVResolution;
-  (*pq)->fQpost= (double)iv_sum2 * parap->fVResolution;
-  (*pq)->fQ = (*pq)->fQpre + (*pq)->fQpost;
-  
-  //============================================================
-  free(d_orig);
-  free(d_usig);
-  free(d_smth);
-  
+  //----------> end
   return true;
 }
 
-//======================================================================
-
-bool get_psd1( PulsePSD1_t **psd1, const PulseForm_t *pulse,
-               ParaPulse_t *parap, ParaPSD1_t *ppsd1 )
+// cast 8-bit pulse data
+bool dp_cast_data_8( uint32_t **d_orig, int **d_usig, double **d_smth,
+                     int *nlen, PulsePortrait_t *ppt,
+                     const PulseForm8_t *pulse, ParaPulse_t *para_p )
 {
-  uint32_t  *d_orig = NULL; // copied original signal
-  int       *d_usig = NULL; // flipped signal if polarity is minus
-  double    *d_smth = NULL; // smoothed signal: not used now
-  ExtremeVal_t ev;
+  PulseForm_t p8;
+  p8.ndigi = 1;
+  p8.nlen = pulse->nlen;
+  p8.data = pulse->data;
+  return dp_cast_data( d_orig, d_usig, d_smth, nlen, ppt, &p8, para_p );
+}
 
-  // temp var
-  int   idx, idx1, idx2, idx3, idx4;
-  int   idx_peak;
-  int   iv_sum1, iv_sum2;
+// cast 16-bit pulse data
+bool dp_cast_data_16( uint32_t **d_orig, int **d_usig, double **d_smth,
+                      int *nlen, PulsePortrait_t *ppt,
+                      const PulseForm16_t *pulse, ParaPulse_t *para_p )
+{
+  PulseForm_t p16;
+  p16.ndigi = 2;
+  p16.nlen = pulse->nlen;
+  p16.data = pulse->data;
+  return dp_cast_data( d_orig, d_usig, d_smth, nlen, ppt, &p16, para_p );
+}
 
-  // cast data
-  if( cast_data( &d_orig, &d_usig, &d_smth, &ev, pulse, parap ) == false ) {
+//============================================================
+
+// get extended portraits of the pulse
+
+bool dp_get_portrait_ext( PulsePortraitExt_t *ppet, int *nlen, const int *d_sig,
+                          PulsePortrait_t *ppt, ParaPulse_t *para_p )
+{
+  int   iv, iv_peak, iv_thres;
+  int   idx, idx_peak, idx_r1, idx_r2;
+  
+  // initialize PulsePortraitExt
+  
+  if( ppet == NULL ) {
+    ppet = (PulsePortraitExt_t *) calloc(1, sizeof(PulsePortraitExt_t));
+  }
+
+  //----------> threshold line
+  
+  if( para_p->fThreshold < para_p->fSwing ) {
+    para_p->fThreshold = para_p->fSwing;
+  }
+  iv_thres = (int) (para_p->fThreshold * para_p->fVResolution);
+  
+  //----------> i_pre, i_post
+  
+  idx_peak = (int) (ppt->fPeak / para_p->fBinResolution);
+  
+  // find signal point begin to above threshold before the peak
+  idx_r1 = 0;
+  for(idx = 1; idx < idx_peak; idx++) {
+    if( d_sig[idx] > iv_thres ) {
+      idx_r1 = idx;
+      break;
+    }
+  }
+  
+  // find signal point begin to below threshold after the peak
+  idx_r2 = idx_peak;
+  for(idx = idx_peak+1; idx < *nlen; idx++) {
+    if( d_sig[idx] < iv_thres ) {
+      idx_r2 = idx;
+      break;
+    }
+  }
+
+  // fPpre, fPost
+  
+  ppet->fPpre  = para_p->fBinResolution * (idx_peak - idx_r1);
+  ppet->fPpost = para_p->fBinResolution * (idx_r2 - idx_peak);
+  
+  //----------> Trigger: i_trig
+  
+  ppet->fTpre  = ppt->fTrigger - para_p->fBinResolution * idx_r1;
+  ppet->fTpost = para_p->fBinResolution * idx_r2 - ppt->fTrigger;
+  
+  //----------> FWHM
+  
+  iv_peak = (int) (ppt->fPeak / para_p->fVResolution);
+  iv = iv_peak/2;
+  
+  idx_r1 = 0;
+  for(idx = 1; idx < idx_peak; idx++) {
+    idx_r1 = idx;
+    if( (iv - d_sig[idx]) < 2 ) break;
+  }
+
+  idx_r2 = idx_peak;
+  for(idx = idx_peak+1; idx < *nlen; idx++) {
+    idx_r2 = idx;
+    if( (d_sig[idx] - iv) < 2 ) break;
+  }
+
+  ppet->fFWHM = (idx_r2 - idx_r1) * para_p->fBinResolution;
+  
+  //----------> end
+  return true;
+}
+
+//============================================================
+
+// pulse integral
+
+bool dp_get_q( PulseQ_t *pq, int *nlen, const int *d_sig,
+               PulsePortrait_t *ppt, ParaPulse_t *para_p )
+{
+  int   iv_thres;
+  int   iv_sum;
+  int   idx, idx_peak, idx_r1, idx_r2;
+
+  if( pq == NULL ) {
+    pq = (PulseQ_t *) calloc(1, sizeof(PulseQ_t));
+  }
+
+  //----------> threshold line
+  
+  if( para_p->fThreshold < para_p->fSwing ) {
+    para_p->fThreshold = para_p->fSwing;
+  }
+  iv_thres = (int) (para_p->fThreshold * para_p->fVResolution);
+  
+  //----------> i_pre, i_post
+
+  idx_peak = (int) (ppt->fPeak / para_p->fBinResolution);
+  
+  // find signal point begin to above threshold before the peak
+
+  idx_r1 = 0;
+  for(idx = 1; idx < idx_peak; idx++) {
+    if( d_sig[idx] > iv_thres ) {
+      idx_r1 = idx;
+      break;
+    }
+  }
+
+  // Qpre
+  
+  iv_sum = 0;
+  for( idx=idx_r1; idx < idx_peak; idx++ ) {
+    iv_sum += d_sig[idx];
+  }
+  pq->fQpre = (double) iv_sum * para_p->fVResolution;
+  
+  // find signal point begin to below threshold after the peak
+
+  idx_r2 = idx_peak;
+  for(idx = idx_peak+1; idx < *nlen; idx++) {
+    if( d_sig[idx] < iv_thres ) {
+      idx_r2 = idx;
+      break;
+    }
+  }
+
+  // Qpost
+  
+  iv_sum = 0;
+  for( idx = idx_peak; idx < idx_r2; idx++ ) {
+    iv_sum += d_sig[idx];
+  }
+  pq->fQpost = (double) iv_sum * para_p->fVResolution;
+
+  pq->fQ = pq->fQpre + pq->fQpost;
+
+  //----------> Qtot
+
+  iv_sum = 0;
+  for( idx = 0; idx < *nlen; idx++ ) {
+    iv_sum += d_sig[idx];
+  }
+  pq->fQtot = (double) iv_sum * para_p->fVResolution;
+  
+  //----------> end
+  return true;
+}
+
+//============================================================
+
+// get PSD using ratio of components
+
+bool dp_get_psd_qr( PulsePSD_QR_t *psd, int *nlen, const int *d_sig,
+                    PulsePortrait_t *ppt, ParaPulse_t *para_p,
+                    ParaPSD_QR_t *para_psd )
+{
+  int  iv_sum;
+  int  idx;
+  int  idx_peak = (int) (ppt->fPeak / para_p->fBinResolution);
+
+  // get gate index
+  
+  int  idx1 = idx_peak + (int) (para_psd->fT1 / para_p->fBinResolution);
+  int  idx2 = idx_peak + (int) (para_psd->fT2 / para_p->fBinResolution);
+  int  idx3 = idx_peak + (int) (para_psd->fT3 / para_p->fBinResolution);
+  int  idx4 = idx_peak + (int) (para_psd->fT4 / para_p->fBinResolution);
+
+  if( idx4 > *nlen ) idx4 = *nlen;
+  if( idx3 > idx4 ) idx3 = idx4;
+  if( idx1 > idx2 ) idx1 = idx2;
+  if( idx3 <= idx2 ) {
+    fprintf(stderr, "Error: wrong gate range!\n");
     return false;
   }
   
-  // init psd1
-  if( (*psd1) == NULL ) {
-    printf("Init structure: PulsePSD1\n");
-    (*psd1) = (PulsePSD1_t *) malloc( sizeof(PulsePSD1_t) );
-  }
+  // init if needed
   
-  idx_peak = ev.idx_max;
-  
-  //============================================================
-  idx1 = idx_peak + (int) (ppsd1->fT1 * parap->fBinResolution);
-  idx2 = idx_peak + (int) (ppsd1->fT2 * parap->fBinResolution);
-  idx3 = idx_peak + (int) (ppsd1->fT3 * parap->fBinResolution);
-  idx4 = idx_peak + (int) (ppsd1->fT4 * parap->fBinResolution);
-  iv_sum1 = iv_sum2 = 0;
-
-  if( idx4 > pulse->nlen ) idx4 = pulse->nlen;
-  if( idx3 > idx4 ) idx3 = idx4;
-  if( idx2 > idx3 ) idx2 = idx3;
-  if( idx1 > idx2 ) idx1 = idx2;
-
-  // calculation: main portion
-  for(idx = idx1; idx < idx4; idx++) {
-    iv_sum1 += d_usig[idx];
-  }
-  // calculation: tail portion
-  for(idx = idx2; idx < idx3; idx++) {
-    iv_sum2 += d_usig[idx];
+  if( psd == NULL ) {
+    psd = (PulsePSD_QR_t *) calloc(1, sizeof(PulsePSD_QR_t));
   }
 
-  // unit conversion: based on ns and mV
-  (*psd1)->fQ1 = iv_sum1 * parap->fBinResolution * parap->fVResolution;
-  (*psd1)->fQ2 = iv_sum2 * parap->fBinResolution * parap->fVResolution;
-  // ratio of portions: tail vs. main
-  (*psd1)->fPSD1 = (*psd1)->fQ2 / (*psd1)->fQ1;
+  // long gate: T1 -- T4
   
-  //============================================================
-  free(d_orig);
-  free(d_usig);
-  free(d_smth);
+  iv_sum = 0;
+  for( idx = idx1; idx < idx4; idx++ ) {
+    iv_sum += d_sig[idx];
+  }
+  psd->fQlong = (double) iv_sum * para_p->fVResolution ;
+
+  // short gate: T2 -- T3
+  
+  iv_sum = 0;
+  for( idx = idx2; idx < idx3; idx++ ) {
+    iv_sum += d_sig[idx];
+  }
+  psd->fQshort = (double) iv_sum * para_p->fVResolution ;
+
+  // tail, psd
+  
+  psd->fQtail = psd->fQlong - psd->fQshort;
+  psd->fPSD = psd->fQtail / psd->fQlong;
+
+  //----------> end
   return true;
 }
 
