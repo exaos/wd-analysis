@@ -21,8 +21,8 @@
   para_p.bGate       = true;   // software gate
   para_p.fGate.start = 50;     // soft-gate: start
   para_p.fGate.end   = 350;    // soft-gate: end
-  para_p.bSmooth = false;  // wheather smooth data
-  para_p.fp_smth = NULL;   // data smooth function:
+  // para_p.bSmooth = false;  // wheather smooth data
+  // para_p.fp_smth = NULL;   // data smooth function:
                            //   bool f(double **, const int *, const int *)
   para_p.fp_ocut = NULL;   // cut function for original data:
                            //   bool f(int *, const uint32_t *)
@@ -40,7 +40,6 @@
   para_psd.fT2 = -10;   // usually = fT1
   para_psd.fT3 =  10;   // 10 ns after the peak
   para_psd.fT4 =  100;  // 100 ns after the peak
-  para_psd.fPeak = 0;   // fPeak should be set during calculation
 
   // output file
   

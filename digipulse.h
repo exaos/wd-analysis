@@ -72,7 +72,7 @@ extern "C" {
   typedef bool (*ptrCutFuncU)(int *, const int *);
   // function pointer to smooth data, possible:
   //   bool smooth_data( double **data, const int *nlen, const int *orig_data );
-  typedef bool (*ptrFuncSMTH)(double **, const int *, const int *);
+  // typedef bool (*ptrFuncSMTH)(double **, const int *, const int *);
 
   typedef struct ParameterPulse {    
     // pulse polarity: 1=-, 2=+, 3=bipolar
@@ -97,8 +97,8 @@ extern "C" {
     } fGate;
 
     // parameters for smoothing data
-    bool         bSmooth; // switcher to smooth data
-    ptrFuncSMTH  fp_smth; // function to smooth data
+    // bool         bSmooth; // switcher to smooth data
+    // ptrFuncSMTH  fp_smth; // function to smooth data
     
     // the cut function: bool p_cut(int, int*)
     ptrCutFuncO  fp_ocut; // cut for original data
@@ -115,13 +115,13 @@ extern "C" {
   } PulsePortrait_t;
 
   // cast data array and prepare for analysis
-  bool dp_cast_data(   uint32_t **d_orig, int **d_usig, double **d_smth,
+  bool dp_cast_data(   uint32_t **d_orig, int **d_usig,
                        int *nlen, PulsePortrait_t *ppt,
                        const PulseForm_t *pulse, ParaPulse_t *para_p );
-  bool dp_cast_data_8( uint32_t **d_orig, int **d_usig, double **d_smth,
+  bool dp_cast_data_8( uint32_t **d_orig, int **d_usig, 
                        int *nlen, PulsePortrait_t *ppt,
                        const PulseForm8_t *pulse, ParaPulse_t *para_p );
-  bool dp_cast_data_16( uint32_t **d_orig, int **d_usig, double **d_smth,
+  bool dp_cast_data_16( uint32_t **d_orig, int **d_usig,
                         int *nlen,  PulsePortrait_t *ppt,
                         const PulseForm16_t *pulse, ParaPulse_t *para_p );
 
@@ -169,7 +169,6 @@ extern "C" {
   //   - short gate: T2-T3
   // Usually, T1==T2.
   typedef struct ParaPSD_QR {
-    double  fPeak;  // Peak position
     double  fT1;
     double  fT2;
     double  fT3;

@@ -117,7 +117,6 @@ void wd_calc( TChain       *tc /* The Tree pointer */,
   PulseForm_t *p_pulse = new PulseForm_t();
   uint32_t   *d_orig;
   int        *d_usig;
-  double     *d_smth;
   int         nlen = 0;
   
   p_pulse->ndigi = 2;
@@ -133,12 +132,10 @@ void wd_calc( TChain       *tc /* The Tree pointer */,
 
     // cast data
     
-    if( ! dp_cast_data( &d_orig, &d_usig, &d_smth, &nlen, p_pp, p_pulse, para_p ) ) {
+    if( ! dp_cast_data( &d_orig, &d_usig, &nlen, p_pp, p_pulse, para_p ) ) {
       cnt_ko++;
       continue;
     }
-    // std::cout << "cast ok!" << std::endl;
-    // std::cout << "Signal pointer: " << &d_usig << std::endl;
 
     // calculate Qtot
     if( ! dp_get_q( p_pq, &nlen, d_usig, p_pp, para_p ) ) {
@@ -178,7 +175,7 @@ void wd_calc( TChain       *tc /* The Tree pointer */,
     // next
     free(d_orig);
     free(d_usig);
-    free(d_smth);
+
     cnt_ok++;
   }
 

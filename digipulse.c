@@ -5,7 +5,7 @@
 
 // cast data array and prepare for analysis
 
-bool dp_cast_data( uint32_t **d_orig, int **d_usig, double **d_smth,
+bool dp_cast_data( uint32_t **d_orig, int **d_usig, 
                    int *nlen,  PulsePortrait_t *ppt,
                    const PulseForm_t *pulse, ParaPulse_t *para_p )
 {
@@ -134,10 +134,7 @@ bool dp_cast_data( uint32_t **d_orig, int **d_usig, double **d_smth,
 
   //----------> Pulse Portrait
 
-  // PulsePortrait_t: initialization
-  if( ppt == NULL ) {
-    ppt = (PulsePortrait_t *) calloc(1, sizeof(PulsePortrait_t));
-  }
+  if( ppt == NULL ) { return false;  }
 
   // base, swing
   ppt->fBase  = para_p->fBase ;
@@ -149,17 +146,6 @@ bool dp_cast_data( uint32_t **d_orig, int **d_usig, double **d_smth,
 
   // trigger
   ppt->fTrigger = (pulse->nlen * para_p->fTrigger - i_start) * para_p->fBinResolution ;
-
-  //----------> Smoothing
-
-  // calculate the smoothed pulse
-  if( para_p->bSmooth && (para_p->fp_smth != NULL) ) {
-    
-    if( para_p->fp_smth( d_smth, nlen, (*d_usig) ) == false ) {
-      fprintf(stderr, "failed to smooth signal.\n");
-      return false;
-    }
-  }
   
   //----------> last cut
 
@@ -175,7 +161,7 @@ bool dp_cast_data( uint32_t **d_orig, int **d_usig, double **d_smth,
 }
 
 // cast 8-bit pulse data
-bool dp_cast_data_8( uint32_t **d_orig, int **d_usig, double **d_smth,
+bool dp_cast_data_8( uint32_t **d_orig, int **d_usig,
                      int *nlen, PulsePortrait_t *ppt,
                      const PulseForm8_t *pulse, ParaPulse_t *para_p )
 {
@@ -183,11 +169,11 @@ bool dp_cast_data_8( uint32_t **d_orig, int **d_usig, double **d_smth,
   p8.ndigi = 1;
   p8.nlen = pulse->nlen;
   p8.data = pulse->data;
-  return dp_cast_data( d_orig, d_usig, d_smth, nlen, ppt, &p8, para_p );
+  return dp_cast_data( d_orig, d_usig, nlen, ppt, &p8, para_p );
 }
 
 // cast 16-bit pulse data
-bool dp_cast_data_16( uint32_t **d_orig, int **d_usig, double **d_smth,
+bool dp_cast_data_16( uint32_t **d_orig, int **d_usig,
                       int *nlen, PulsePortrait_t *ppt,
                       const PulseForm16_t *pulse, ParaPulse_t *para_p )
 {
@@ -195,7 +181,7 @@ bool dp_cast_data_16( uint32_t **d_orig, int **d_usig, double **d_smth,
   p16.ndigi = 2;
   p16.nlen = pulse->nlen;
   p16.data = pulse->data;
-  return dp_cast_data( d_orig, d_usig, d_smth, nlen, ppt, &p16, para_p );
+  return dp_cast_data( d_orig, d_usig, nlen, ppt, &p16, para_p );
 }
 
 //============================================================
