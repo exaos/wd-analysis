@@ -155,15 +155,7 @@ bool dp_cast_data( uint32_t **d_orig, int **d_usig, double **d_smth,
   // calculate the smoothed pulse
   if( para_p->bSmooth && (para_p->fp_smth != NULL) ) {
     
-    // initialize smoothed data memory
-    (*d_smth) = (double *)calloc( *nlen, sizeof(double) );
-    
-    if((*d_smth) == NULL) {
-      fprintf(stderr, "dp_cast_data: Failed to initialized memory!\n");
-      return false;
-    }
-    
-    if( para_p->fp_smth( (*d_smth), nlen, (*d_usig) ) == false ) {
+    if( para_p->fp_smth( d_smth, nlen, (*d_usig) ) == false ) {
       fprintf(stderr, "failed to smooth signal.\n");
       return false;
     }

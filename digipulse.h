@@ -72,7 +72,7 @@ extern "C" {
   typedef bool (*ptrCutFuncU)(int *, const int *);
   // function pointer to smooth data, possible:
   //   bool smooth_data( double **data, const int *nlen, const int *orig_data );
-  typedef bool (*ptrFuncSMTH)(double *, const int *, const int *);
+  typedef bool (*ptrFuncSMTH)(double **, const int *, const int *);
 
   typedef struct ParameterPulse {    
     // pulse polarity: 1=-, 2=+, 3=bipolar
