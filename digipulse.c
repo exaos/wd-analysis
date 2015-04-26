@@ -67,7 +67,7 @@ bool dp_cast_data( uint32_t **d_orig, int **d_usig,
     case 4:
     default:
       *((*d_orig)+idx) = *((uint32_t *)(pulse->data) + idx + i_start);
-    break;
+      break;
     }
   }
   
@@ -196,9 +196,7 @@ bool dp_get_portrait_ext( PulsePortraitExt_t *ppet, int *nlen, const int *d_sig,
   
   // initialize PulsePortraitExt
   
-  if( ppet == NULL ) {
-    ppet = (PulsePortraitExt_t *) calloc(1, sizeof(PulsePortraitExt_t));
-  }
+  if( ppet == NULL ) {  return false;  }
 
   //----------> threshold line
   
@@ -273,9 +271,7 @@ bool dp_get_q( PulseQ_t *pq, int *nlen, const int *d_sig,
   int   iv_sum;
   int   idx, idx_peak, idx_r1, idx_r2;
 
-  if( pq == NULL ) {
-    pq = (PulseQ_t *) calloc(1, sizeof(PulseQ_t));
-  }
+  if( pq == NULL ) { return false;  }
 
   //----------> threshold line
   
@@ -367,9 +363,7 @@ bool dp_get_psd_qr( PulsePSD_QR_t *psd, int *nlen, const int *d_sig,
   
   // init if needed
   
-  if( psd == NULL ) {
-    psd = (PulsePSD_QR_t *) calloc(1, sizeof(PulsePSD_QR_t));
-  }
+  if( psd == NULL ) { return false;  }
 
   // long gate: T1 -- T4
   
@@ -390,6 +384,83 @@ bool dp_get_psd_qr( PulsePSD_QR_t *psd, int *nlen, const int *d_sig,
   // tail, psd
   
   psd->fQtail = psd->fQlong - psd->fQshort;
+  psd->fPSD = psd->fQtail / psd->fQlong;
+
+  //----------> end
+  return true;
+}
+
+//============================================================
+
+// get PSD using ratio of components: fix range
+
+bool dp_get_psd_qr_fib( PulsePSD_QR_t *psd, int *nlen, const int *d_sig,
+                        PulsePortrait_t *ppt, ParaPulse_t *para_p )
+{
+  int  iv_thres;
+  int  iv_sum;
+  int  idx;
+  int  idx_peak = (int) (ppt->fPeak / para_p->fBinResolution);
+
+  int   idx_r1, idx_r2, idx_fib;
+
+  if( psd == NULL ) { return false;  }
+
+  //----------> threshold line
+  
+  if( para_p->fThreshold < para_p->fSwing ) {
+    para_p->fThreshold = para_p->fSwing;
+  }
+  iv_thres = (int) (para_p->fThreshold * para_p->fVResolution);
+  
+  //----------> i_pre, i_post
+
+  idx_peak = (int) (ppt->fPeak / para_p->fBinResolution);
+  
+  // find signal point begin to above threshold before the peak
+
+  idx_r1 = 0;
+  for(idx = 1; idx < idx_peak; idx++) {
+    if( d_sig[idx] > iv_thres ) {
+      idx_r1 = idx;
+      break;
+    }
+  }
+  
+  // find signal point begin to below threshold after the peak
+
+  idx_r2 = idx_peak;
+  for(idx = idx_peak; idx < *nlen; idx++) {
+    if( d_sig[idx] < iv_thres ) {
+      idx_r2 = idx;
+      break;
+    }
+  }
+
+  // the fix point: 64% to the tail
+  
+  idx_fib = idx_r1 + (int) (0.36 * ((double)idx_r2 - idx_r1));
+
+  printf("Range: %d, %d, %d, %d\n", idx_r1, idx_peak, idx_fib, idx_r2);
+
+  // short gate: idx_r1 -- idx_fib
+  iv_sum = 0;
+  for( idx = idx_r1; idx < idx_fib; idx++ ) {
+    iv_sum += d_sig[idx];
+  }
+  psd->fQshort = (double) iv_sum * para_p->fVResolution ;
+
+  // tail: idx_fib -- idx_r2
+  
+  iv_sum = 0;
+  for( idx = idx_fib; idx < idx_r2; idx++ ) {
+    iv_sum += d_sig[idx];
+  }
+  psd->fQtail = (double) iv_sum * para_p->fVResolution ;
+
+  // tail, psd
+
+  psd->fQlong = psd->fQshort + psd->fQtail;
   psd->fPSD = psd->fQtail / psd->fQlong;
 
   //----------> end

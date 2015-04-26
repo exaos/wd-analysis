@@ -1,12 +1,11 @@
 
-//==================================================
-
-// check the best PSD resolution range for Pu-C
+// Failed to run using CINT!!
+// seems to be a bug in CINT!
 {
   gROOT->LoadMacro("digipulse.c+g");
-  // gROOT->LoadMacro("libdigipulse.so");
-  gROOT->LoadMacro("wd_calc.cpp");
-  
+  gROOT->LoadMacro("psd_test_PuC.C");
+
+    
   // wave parameters
   
   ParaPulse_t para_p;
@@ -30,36 +29,9 @@
   para_p.fp_ucut = NULL;   // cut function for unified data:
                            //   bool f(int *, const int *)
 
-  Bool_t  bExtP = false;
-  
-  // PSD parameters
-  
-  Bool_t   bPSD = true;
-  ParaPSD_QR_t  para_psd;
-  
-  para_psd.fT1 = -10;   // 10 ns before the peak
-  para_psd.fT2 = -10;   // usually = fT1
-  para_psd.fT4 =  100;  // 100 ns after the peak
-
-  // output file
-  
-  const char *fout = "test/BC501-PuC-ranges.root";
-
-  // Tree
-  
   TChain *T = new TChain("wdPulse");
   T->Add("test/wd-BC501-PuC.root");
 
-  // range 1
-  char t_id[32];
-  char t_name[64];
-  for(int i=5; i<25; i+=2) {
-    para_psd.fT3 = i;
-    sprintf(t_id,   "BC501_PuC_%d", i);
-    sprintf(t_name, "pq_BC501_PuC_%d", i);
-    wd_calc( T, &para_p, fout, bExtP, bPSD, &para_psd,
-             t_id, t_name, "Pulse Quantities of BC501 (Pu-C)");
-  }
+  psd_test_PuC(T, &para_p);
 }
 
-//============================================================

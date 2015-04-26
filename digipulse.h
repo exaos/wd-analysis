@@ -4,18 +4,20 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+ 
 #ifdef __linux__
-#include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #endif // __linux__
-
+  
 #ifdef __WIN32__
-#endif // __WIN32__  
-
+typedef unsigned __int32 uint32_t;
+typedef unsigned __int16 uint16_t;
+typedef unsigned __int8  uint8_t;
+#endif // __WIN32__
+  
   // Units mostly used
   // - time   -- ns
   // - heght  -- mV
@@ -179,6 +181,11 @@ extern "C" {
   bool dp_get_psd_qr( PulsePSD_QR_t *psd, int *nlen, const int *d_sig,
                       PulsePortrait_t *ppt, ParaPulse_t *para_p,
                       ParaPSD_QR_t *para_psd );
+
+  // get PSD using ratio of components: fix range
+  bool dp_get_psd_qr_fib( PulsePSD_QR_t *psd, int *nlen, const int *d_sig,
+                          PulsePortrait_t *ppt, ParaPulse_t *para_p );
+
 
 #ifdef __cplusplus
 };

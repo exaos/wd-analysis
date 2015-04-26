@@ -25,7 +25,7 @@ endif
 
 ROOT_CFLAGS := $(shell ${ROOT_CONFIG} --cflags)
 ROOT_LIBS   := $(shell ${ROOT_CONFIG} --libs)
-ROOT_CINT := $(shell which rootcint)
+ROOT_CINT   := $(shell which rootcint)
 
 ############################################################
 CXXFLAGS += ${ROOT_CFLAGS}
