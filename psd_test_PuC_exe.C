@@ -4,7 +4,7 @@
 {
   gROOT->LoadMacro("digipulse.c+g");
   gROOT->LoadMacro("psd_test_PuC.C");
-
+  gROOT->LoadMacro("wd_calc.cpp");
     
   // wave parameters
   
@@ -29,9 +29,33 @@
   para_p.fp_ucut = NULL;   // cut function for unified data:
                            //   bool f(int *, const int *)
 
+  const char *fout = "test/BC501-PuC.root";
+  
   TChain *T = new TChain("wdPulse");
   T->Add("test/wd-BC501-PuC.root");
 
-  psd_test_PuC(T, &para_p);
+  psd_test_PuC(T, &para_p, fout);
+
+  // 
+  Bool_t  bExtP = true;
+  
+  // PSD parameters
+  
+  Bool_t   bPSD = true;
+  ParaPSD_QR_t  para_psd;
+  
+  para_psd.fT1 = -10;   // 10 ns before the peak
+  para_psd.fT2 = -10;   // usually = fT1
+  para_psd.fT3 =  10;   // 10 ns after the peak
+  para_psd.fT4 =  90;  // 100 ns after the peak
+
+
+  // range 1
+  wd_calc( T, &para_p, fout, bExtP, bPSD, &para_psd,
+           "BC501PuC_1",
+           "pq_BC501PuC_1",
+           "Pulse Quantities of BC501 (Pu-C)",
+           "RECREATE" );
+
 }
 

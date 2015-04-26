@@ -184,7 +184,8 @@ typedef unsigned __int8  uint8_t;
 
   // get PSD using ratio of components: fix range
   bool dp_get_psd_qr_fib( PulsePSD_QR_t *psd, int *nlen, const int *d_sig,
-                          PulsePortrait_t *ppt, ParaPulse_t *para_p );
+                          PulsePortrait_t *ppt, ParaPulse_t *para_p,
+                          ParaPSD_QR_t *para_psd );
 
 
 #ifdef __cplusplus

@@ -395,7 +395,8 @@ bool dp_get_psd_qr( PulsePSD_QR_t *psd, int *nlen, const int *d_sig,
 // get PSD using ratio of components: fix range
 
 bool dp_get_psd_qr_fib( PulsePSD_QR_t *psd, int *nlen, const int *d_sig,
-                        PulsePortrait_t *ppt, ParaPulse_t *para_p )
+                        PulsePortrait_t *ppt, ParaPulse_t *para_p,
+                        ParaPSD_QR_t *para_psd )
 {
   int  iv_thres;
   int  iv_sum;
@@ -441,7 +442,12 @@ bool dp_get_psd_qr_fib( PulsePSD_QR_t *psd, int *nlen, const int *d_sig,
   
   idx_fib = idx_r1 + (int) (0.36 * ((double)idx_r2 - idx_r1));
 
-  printf("Range: %d, %d, %d, %d\n", idx_r1, idx_peak, idx_fib, idx_r2);
+  if( para_psd != NULL ) {
+    para_psd->fT1 = idx_peak;
+    para_psd->fT2 = idx_r1 - idx_peak;
+    para_psd->fT3 = idx_fib - idx_peak;
+    para_psd->fT4 = idx_r2 - idx_peak;
+  }
 
   // short gate: idx_r1 -- idx_fib
   iv_sum = 0;

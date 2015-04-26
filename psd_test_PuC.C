@@ -23,8 +23,6 @@ void psd_test_PuC(TTree *T,
 {
   // gROOT->LoadMacro("digipulse.c+g");
   // gROOT->LoadMacro("libdigipulse.so");
-
-  Bool_t  bExtP = false;
   
   // PSD parameters
   
@@ -50,12 +48,14 @@ void psd_test_PuC(TTree *T,
   PulsePortraitExt_t *p_pp_ex = new PulsePortraitExt_t();
   PulsePSD_QR_t      *p_psd   = new PulsePSD_QR_t();
   PulsePSD_QR_t      *p_psd_fib = new PulsePSD_QR_t();
+  ParaPSD_QR_t       *para_psd_f= new ParaPSD_QR_t();
 
   tPQ->Branch("pp", p_pp, "Base/D:Swing/D:Peak/D:PeakH/D:Trigger/D");
   tPQ->Branch("pq", p_pq, "Q/D:Qtot/D:Qpre/D:Qpost/D");
   tPQ->Branch("pp_ex",   p_pp_ex,   "Ppre/D:Ppost/D:FWHM/D:Tpre/D:Tpost/D");
   tPQ->Branch("psd",     p_psd,     "PSD/D:Qlong/D:Qshort/D:Qtail/D");
   tPQ->Branch("psd_fib", p_psd_fib, "PSD/D:Qlong/D:Qshort/D:Qtail/D");
+  tPQ->Branch("psd_para",para_psd_f,"T1/D:T2/D:T3/D:T4");
   
   // histograms
   TH1F  *h1_q_w = new TH1F( "h1_q_w", "Qtot: wide range", 2048, 0, 1.8e5 );  // wide range Qtot
@@ -113,7 +113,7 @@ void psd_test_PuC(TTree *T,
     }
 
     // calculate extended portrait
-    if( bExtP && ! dp_get_portrait_ext( p_pp_ex, &nlen, d_usig, p_pp, para_p ) ) {
+    if( ! dp_get_portrait_ext( p_pp_ex, &nlen, d_usig, p_pp, para_p ) ) {
       // std::cerr << "Failed to calculate extended portrait!" << std::endl;
       cnt_ko_pex++;
       isFailed = true;
@@ -126,7 +126,7 @@ void psd_test_PuC(TTree *T,
       isFailed = true;
     }
     
-    if( !dp_get_psd_qr_fib( p_psd_fib, &nlen, d_usig, p_pp, para_p ) ) {
+    if( !dp_get_psd_qr_fib( p_psd_fib, &nlen, d_usig, p_pp, para_p, para_psd_f ) ) {
       cnt_ko_psd++;
       isFailed = true;
     }
@@ -159,9 +159,7 @@ void psd_test_PuC(TTree *T,
             << "; Entries processed: " << cnt_ok << " / " << N << std::endl
             << "Successed: " << (Double_t) cnt_ok * 100 / N << "%" << std::endl
             << "Failed: " << cnt_ko*100/N << "%, " << cnt_ko << std::endl;
-  if( bExtP ) {
-    std::cout << "ExtP Failed: " << cnt_ko_pex*100/N << "%, " << cnt_ko_pex << std::endl;
-  }
+  std::cout << "ExtP Failed: " << cnt_ko_pex*100/N << "%, " << cnt_ko_pex << std::endl;
   std::cout << "PSD Failed: " << cnt_ko_psd*100/N << "%, " << cnt_ko_psd << std::endl;
 
   // histograms
@@ -185,7 +183,7 @@ void psd_test_PuC(TTree *T,
   // free
   delete p_pp;
   delete p_pq;
-  if( bExtP ) delete p_pp_ex;
+  delete p_pp_ex;
   delete p_psd;
 }
 
