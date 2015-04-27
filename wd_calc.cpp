@@ -115,9 +115,9 @@ void wd_calc( TChain       *tc /* The Tree pointer */,
   
   // pulse data
   PulseForm_t *p_pulse = new PulseForm_t();
-  uint32_t   *d_orig;
-  int        *d_usig;
-  int         nlen = 0;
+  uint32_t    *d_orig;
+  int         *d_usig;
+  int          nlen = 0;
   
   p_pulse->ndigi = 2;
 

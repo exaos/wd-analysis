@@ -26,11 +26,11 @@ bool dp_cast_data( uint32_t **d_orig, int **d_usig,
 
   // check if software gate properly set
   
-  if( para_p->bGate && ((para_p->fGate).end > 0) ) {
+  if( para_p->bGate && ((para_p->fsGate).end > 0) ) {
 
     // calculate index: (start,end)
-    i_start = (int)( para_p->fBinResolution * (para_p->fGate).start );
-    i_end   = (int)( para_p->fBinResolution * (para_p->fGate).end );
+    i_start = (int)( para_p->fBinResolution * (para_p->fsGate).start );
+    i_end   = (int)( para_p->fBinResolution * (para_p->fsGate).end );
     
     if( i_end > pulse->nlen ) { i_end = pulse->nlen;   }
     if( i_start > i_end )     { i_start = 0;   }
@@ -75,7 +75,7 @@ bool dp_cast_data( uint32_t **d_orig, int **d_usig,
 
   // cut for original signal
   
-  if( (para_p->fp_ocut != NULL) && !(*para_p->fp_ocut)(nlen, (*d_orig)) ) {
+  if( (para_p->pf_ocut != NULL) && !(*para_p->pf_ocut)(nlen, (*d_orig)) ) {
     // printf("Original cut: false!");
     return false;
   }
@@ -115,7 +115,7 @@ bool dp_cast_data( uint32_t **d_orig, int **d_usig,
   // flip the pulse if it is negative
   
   // pulse polarity
-  if( para_p->polar == p_m ) {  isig = -1;  }
+  if( para_p->ePolar == ep_m ) {  isig = -1;  }
   
   pp_min.i = pp_max.i = 0;
   pp_min.v = pp_max.v = (*d_usig)[0] = isig * ((*d_orig)[0] - iv_base);
@@ -151,7 +151,7 @@ bool dp_cast_data( uint32_t **d_orig, int **d_usig,
 
   // cut for unified signal
   
-  if( (para_p->fp_ucut != NULL) && !(*para_p->fp_ucut)(nlen, (*d_usig)) ) {
+  if( (para_p->pf_ucut != NULL) && !(*para_p->pf_ucut)(nlen, (*d_usig)) ) {
     // printf("Unified cut: false!");
     return false;
   }

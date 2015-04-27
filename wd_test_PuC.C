@@ -2,14 +2,14 @@
 
 //==================================================
 {
-  gROOT->LoadMacro("digipulse.c+g");
   // gROOT->LoadMacro("libdigipulse.so");
+  gROOT->LoadMacro("digipulse.c+g");
   gROOT->LoadMacro("wd_calc.cpp");
   
   // wave parameters
   
   ParaPulse_t para_p;
-  para_p.polar     = p_m;      // polarity: negative
+  para_p.ePolar    = ep_m;     // polarity: negative
   para_p.bAutoBase = true;     // automaticly search the baseline
   para_p.fBase     = 1024;     // default baseline
   para_p.fBinResolution = 1;   // bin resolution: 1 ns
@@ -18,15 +18,13 @@
   para_p.fTrigger       = 0.4; // trigger position: 40%
   para_p.fThreshold     = 10;  // threshold: 10 mV
   para_p.fDCoffset      = 0.;  // DC offset (unit: mV) -- used with baseline
-  para_p.bGate       = true;   // software gate
-  para_p.fGate.start = 50;     // soft-gate: start
-  para_p.fGate.end   = 350;    // soft-gate: end
-  // para_p.bSmooth = false;  // wheather smooth data
-  // para_p.fp_smth = NULL;   // data smooth function:
-                           //   bool f(double **, const int *, const int *)
-  para_p.fp_ocut = NULL;   // cut function for original data:
+  para_p.bGate        = true;  // software gate
+  para_p.fsGate.start = 50;    // soft-gate: start
+  para_p.fsGate.end   = 350;   // soft-gate: end
+
+  para_p.pf_ocut = NULL;   // cut function for original data:
                            //   bool f(int *, const uint32_t *)
-  para_p.fp_ucut = NULL;   // cut function for unified data:
+  para_p.pf_ucut = NULL;   // cut function for unified data:
                            //   bool f(int *, const int *)
 
   Bool_t  bExtP = true;

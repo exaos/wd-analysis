@@ -4,14 +4,15 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
- 
+
 #ifdef __linux__
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #endif // __linux__
-  
+
+// for MS-Win32, not tested!
 #ifdef __WIN32__
 typedef unsigned __int32 uint32_t;
 typedef unsigned __int16 uint16_t;
@@ -64,7 +65,7 @@ typedef unsigned __int8  uint8_t;
   //============================================================
 
   // Parameters for analysis
-  typedef enum PulsePolarity { p_m=1, p_p=2, p_bi=3, p_auto=4 } PulsePolar_t;
+  typedef enum PulsePolarity { ep_m=1, ep_p=2, ep_bi=3, ep_auto=4 } PulsePolar_t;
 
   // function pointer type to cut the original pulse, possible:
   //   bool cut_orig_data( int *nlen, const uint32_t d_orig );
@@ -78,7 +79,7 @@ typedef unsigned __int8  uint8_t;
 
   typedef struct ParameterPulse {    
     // pulse polarity: 1=-, 2=+, 3=bipolar
-    PulsePolar_t polar;
+    PulsePolar_t ePolar;
       
     // automatically search the baseline or not
     bool    bAutoBase;
@@ -96,15 +97,15 @@ typedef unsigned __int8  uint8_t;
     struct Gate {
       double start;
       double end;
-    } fGate;
+    } fsGate;
 
     // parameters for smoothing data
     // bool         bSmooth; // switcher to smooth data
     // ptrFuncSMTH  fp_smth; // function to smooth data
     
     // the cut function: bool p_cut(int, int*)
-    ptrCutFuncO  fp_ocut; // cut for original data
-    ptrCutFuncU  fp_ucut; // Cut for unified data
+    ptrCutFuncO  pf_ocut; // cut for original data
+    ptrCutFuncU  pf_ucut; // Cut for unified data
   } ParaPulse_t;
   
   // Pulse portrait: most common quantities
@@ -182,7 +183,7 @@ typedef unsigned __int8  uint8_t;
                       PulsePortrait_t *ppt, ParaPulse_t *para_p,
                       ParaPSD_QR_t *para_psd );
 
-  // get PSD using ratio of components: fix range
+  // get PSD using ratio of components: fix range, just for test purpose
   bool dp_get_psd_qr_fib( PulsePSD_QR_t *psd, int *nlen, const int *d_sig,
                           PulsePortrait_t *ppt, ParaPulse_t *para_p,
                           ParaPSD_QR_t *para_psd );
