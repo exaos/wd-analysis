@@ -48,7 +48,7 @@ void wdpsel::Init(TTree *tree)
   fChain = tree;
   fChain->SetMakeClass(1);
 
-  fChain->SetBranchAddress("Wave", &Wave_nLen, &b_Wave);
+  fChain->SetBranchAddress("Wave", &fWave.nLen, &b_Wave);
 }
 
 Bool_t wdpsel::Notify()
@@ -74,31 +74,26 @@ void wdpsel::Begin(TTree * /*tree*/)
   if( option == "" ) {
     option="wdpsel.root";
   }
+
+  // Read parameters from file "option":
+  //  1. get output filename -- fnOut;
+  //  2. construct parameter structurs -- para_p, para_psd, ...
+  GetParameters(option);
   
-  fOut = new TFile(option,"RECREATE");
-  fPQ  = new TTree("PulseQ","Pulse Quantities");
+  frOut  = new TFile(fnOut, "RECREATE");
+  fTpq  = new TTree("PulseQ","Pulse Quantities");
 
-  pq   = new PulseQuantity_t();
-  psd1 = new PulsePSD1_t();
-  fPQ->Branch("pq", pq,
-              "Base/D:Swing/D:Peak/D:PeakH/D:Ppre/D:Ppost/D:FWHM/D:Trigger/D:Tpre/D:Tpost/D:Q/D:Qtot/D:Qpre/D:Qpost/D");
-  fPQ->Branch("psd1", psd1, "PSD1/D:Q1/D:Q2/D");
-
+  p_pp    = new PulsePortrait_t();
+  p_pp_ex = new PulsePortraitExt_t();
+  p_pq    = new PulseQ_t();
+  p_psd   = new PulsePSD_QR_t();
+  fTpq->Branch("pp",     p_pp,    "Base/D:Swing/D:Peak/D:PeakH/D:Trigger/D");
+  fTpq->Branch("pp_ex",  p_pp_ex, "Ppre/D:Ppost/D:FWHM/D:Tpre/D:Tpost/D");
+  fTpq->Branch("pq",     p_pq,    "Q/D:Qtot/D:Qpre/D:Qpost/D");
+  fTpq->Branch("psd_qr", p_psd,   "PSD/D:Qlong/D:Qshort/D:Qtail/D");
+  
   // init
   fpulse.ndigi = 2;
-  p_pulse.bAutoBase = true;
-  p_pulse.polar = p_m;
-  p_pulse.fBase = 1024;
-  p_pulse.fBinResolution = 1;
-  p_pulse.fVResolution = 1;
-  p_pulse.fSwing = 3;
-  p_pulse.fThreshold = 5;
-  p_pulse.fp_ocut = NULL; // pointers must be initialzed in C++
-  p_pulse.fp_ucut = NULL;
-  p_psd1.fT1 = -10;
-  p_psd1.fT2 =  10;
-  p_psd1.fT3 = 100;
-  p_psd1.fT4 = 100;
 }
 
 void wdpsel::SlaveBegin(TTree * /*tree*/)
@@ -108,7 +103,6 @@ void wdpsel::SlaveBegin(TTree * /*tree*/)
   // argument is deprecated (on PROOF 0 is passed).
 
   TString option = GetOption();
-
 }
 
 Bool_t wdpsel::Process(Long64_t entry)
@@ -140,7 +134,7 @@ Bool_t wdpsel::Process(Long64_t entry)
       ! get_psd1(&psd1, &fpulse, &p_pulse, &p_psd1) )
     return kFALSE;
 
-  fPQ->Fill();
+  fTpq->Fill();
   
   return kTRUE;
 }
@@ -159,9 +153,9 @@ void wdpsel::Terminate()
   // query. It always runs on the client, it can be used to present the results
   // graphically or save the results to file.
 
-  fPQ->Write();
-  fOut->Close();
-  fPQ = NULL;
-  fOut = NULL;
+  fTpq->Write();
+  frOut->Close();
+  fTpq = NULL;
+  frOut = NULL;
 }
 

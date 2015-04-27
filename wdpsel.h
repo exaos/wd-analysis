@@ -16,23 +16,36 @@
 
 // Utilities for digital waveforms
 #include "digipulse.h"
-  
+
 // Fixed size dimensions of array or collections stored in the TTree if any.
+
+typedef struct WaveDump {
+  UInt_t   nLen;
+  UInt_t   nBoard;
+  UInt_t   nChannel;
+  UInt_t   nEventID;
+  UInt_t   nPattern;
+  UInt_t   nTimeStamp;
+  UInt_t   nDAC;
+  UShort_t WAVE[4200]; // The input wave points should less than this
+} WaveDump_t;
+
 
 class wdpsel : public TSelector {
  public :
   TTree          *fChain;   //!pointer to the analyzed TTree or TChain
 
   // Declaration of leaf types
-  UInt_t          Wave_nLen;
-  UInt_t          Wave_nBoardID;
-  UInt_t          Wave_nChannel;
-  UInt_t          Wave_nEventID;
-  UInt_t          Wave_nPattern;
-  UInt_t          Wave_nTimeStamp;
-  UInt_t          Wave_nDAC;
-  UShort_t        Wave_WAVE[4096];   //[nLen]
-
+  /* UInt_t          Wave_nLen; */
+  /* UInt_t          Wave_nBoardID; */
+  /* UInt_t          Wave_nChannel; */
+  /* UInt_t          Wave_nEventID; */
+  /* UInt_t          Wave_nPattern; */
+  /* UInt_t          Wave_nTimeStamp; */
+  /* UInt_t          Wave_nDAC; */
+  /* UShort_t        Wave_WAVE[4096];   //[nLen] */
+  WaveDump_t    fWave;
+  
   // List of branches
   TBranch        *b_Wave;   // -- the branch
   
@@ -53,15 +66,25 @@ class wdpsel : public TSelector {
   virtual void    SlaveTerminate();
   virtual void    Terminate();
 
-  // data output
-  PulseForm_t      fpulse;
-  ParaPulse_t      p_pulse;
-  ParaPSD1_t       p_psd1;
-  PulseQuantity_t *pq;
-  PulsePSD1_t     *psd1;
+  //==========> data output
+
+  // parameters
   
-  TTree    *fPQ;  // Physical quantites
-  TFile    *fOut; // Output file
+  PulseForm_t      fpulse;
+  ParaPulse_t      para_p;
+  ParaPSD_QR_t     para_psd;
+  
+  char  *fnOut; // output filename
+  
+  // variables
+  
+  PulsePortrait_t    *p_pp;
+  PulsePortraitExt_t *p_pp_ex;
+  PulseQ_t           *p_pq;
+  PulsePSD_QR_t      *p_psd;
+  
+  TTree    *fTpq; // Physical quantites
+  TFile    *frOut; // Output file
  
   // Make this class visible to ROOT -- CINT
   ClassDef(wdpsel,0);
