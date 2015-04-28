@@ -9,13 +9,13 @@
 // WaveDump data structure
 
 typedef struct WaveDump {
-  UInt_t nLen;
-  UInt_t nBoard;
-  UInt_t nChannel;
-  UInt_t nEventID;
-  UInt_t nPattern;
-  UInt_t nTimeStamp;
-  UInt_t nDAC;
+  UInt_t   nLen;
+  UInt_t   nBoardID;
+  UInt_t   nPattern;
+  UInt_t   nChannel;
+  UInt_t   nEventID;
+  UInt_t   nTimeStamp;
+  UInt_t   nDAC;
   UShort_t WAVE[4200]; // The input wave points should less than this
 } WaveDump_t;
 
