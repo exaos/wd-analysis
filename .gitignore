@@ -5,6 +5,7 @@
 *.d
 *.so
 *Dict.*
+*.pyc
 
 # dir
 test/
