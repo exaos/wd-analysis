@@ -6,6 +6,9 @@
 *.so
 *Dict.*
 *.pyc
+*.gz
+*.bz2
+*.xz
 
 # dir
 test/
